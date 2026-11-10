@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button, ButtonLink, IconButton } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/Choice";
+import { Switch } from "@/components/ui/Switch";
 import { Dialog } from "@/components/ui/Dialog";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
@@ -13,10 +13,12 @@ import { EmptyState, Skeleton } from "@/components/ui/States";
 import { toast } from "@/components/ui/Toaster";
 import { triggerMeta } from "@/components/workflow/step-meta";
 import { useWorkspaceReady } from "@/hooks/useWorkspaceReady";
+import { lintWorkflow } from "@/lib/engine/lint";
 import type { Workflow } from "@/lib/engine/types";
-import { defaultSettings } from "@/lib/workflow-factory";
+import { blankDraft } from "@/lib/workflow-factory";
+import { maxImportBytes, parseWorkflowFile } from "@/lib/workflow-io";
 import { formatPercent, formatRelative } from "@/lib/format";
-import { newId, useWorkspace } from "@/lib/store/workspace";
+import { useWorkspace } from "@/lib/store/workspace";
 import { PageHeader } from "./PageHeader";
 
 type Filter = "all" | "on" | "off";
@@ -30,8 +32,9 @@ export function WorkflowsList() {
     setEnabled,
     duplicateWorkflow,
     deleteWorkflow,
-    addWorkflow,
+    addDraft,
   } = useWorkspace();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [pendingDelete, setPendingDelete] = useState<Workflow | null>(null);
@@ -61,25 +64,19 @@ export function WorkflowsList() {
       workflow.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
-  function createBlank() {
-    const now = new Date().toISOString();
-    const id = newId("wf");
-    addWorkflow({
-      id,
-      name: "Untitled workflow",
-      description: "",
-      enabled: false,
-      trigger: {
-        app: "forms",
-        event: "submitted",
-        config: { form: "Contact" },
-      },
-      steps: [],
-      settings: defaultSettings,
-      createdAt: now,
-      updatedAt: now,
-    });
+  async function importFile(file: File | undefined) {
+    if (!file) return;
+    if (file.size > maxImportBytes)
+      return toast("The file is larger than 200 KB", "danger");
+    const result = parseWorkflowFile(await file.text());
+    if (!result.ok) return toast(result.error, "danger");
+    const id = addDraft(result.value);
+    toast("Workflow imported. It starts turned off.", "success");
     router.push(`/app/workflows/${id}`);
+  }
+
+  function createBlank() {
+    router.push(`/app/workflows/${addDraft(blankDraft)}`);
   }
 
   return (
@@ -89,6 +86,25 @@ export function WorkflowsList() {
         description="Automations in this workspace."
         actions={
           <>
+            <Button
+              variant="secondary"
+              icon="upload"
+              onClick={() => fileRef.current?.click()}
+            >
+              Import
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              tabIndex={-1}
+              aria-label="Import a workflow file"
+              onChange={(event) => {
+                importFile(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
             <ButtonLink href="/app/playbooks" variant="secondary" icon="book">
               From a playbook
             </ButtonLink>
@@ -185,7 +201,19 @@ export function WorkflowsList() {
                     checked={workflow.enabled}
                     hideLabel
                     label={`${workflow.name} is ${workflow.enabled ? "on" : "off"}`}
-                    onChange={(value) => setEnabled(workflow.id, value)}
+                    onChange={(value) => {
+                      const errors = lintWorkflow(workflow).filter(
+                        (issue) => issue.severity === "error",
+                      ).length;
+                      if (value && errors > 0) {
+                        toast(
+                          `Open the workflow and fix ${errors} ${errors === 1 ? "error" : "errors"} first`,
+                          "danger",
+                        );
+                        return;
+                      }
+                      setEnabled(workflow.id, value);
+                    }}
                   />
                   <IconButton
                     icon="copy"

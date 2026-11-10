@@ -1,30 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { EmptyState, Skeleton } from "@/components/ui/States";
-import { CanvasViewport } from "@/components/workflow/CanvasViewport";
-import { TraceList } from "@/components/workflow/TraceList";
-import {
-  diagramSize,
-  WorkflowDiagram,
-} from "@/components/workflow/WorkflowDiagram";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { toast } from "@/components/ui/Toaster";
 import { useWorkspaceReady } from "@/hooks/useWorkspaceReady";
+import { execute } from "@/lib/engine/executor";
 import { formatCurrency, formatDateTime, formatDuration } from "@/lib/format";
-import { runPath } from "@/lib/run-path";
+import { maskRecord } from "@/lib/mask";
 import { useWorkspace } from "@/lib/store/workspace";
+import { RunDebugger } from "./debugger/RunDebugger";
 import { PageHeader } from "./PageHeader";
 import { RunStatus } from "./RunStatus";
 
 export function RunDetail({ id }: { id: string }) {
   const ready = useWorkspaceReady();
+  const router = useRouter();
   const run = useWorkspace((state) =>
     state.runs.find((item) => item.id === id),
   );
   const workflow = useWorkspace((state) =>
     state.workflows.find((item) => item.id === run?.workflowId),
   );
-  const canvas = useMediaQuery("(min-width: 768px)", true);
+  const addRuns = useWorkspace((state) => state.addRuns);
 
   if (!ready) return <Skeleton className="h-[60dvh] w-full" />;
   if (!run) {
@@ -42,7 +41,21 @@ export function RunDetail({ id }: { id: string }) {
     );
   }
 
-  const size = workflow ? diagramSize(workflow.steps) : null;
+  function replay() {
+    if (!workflow || !run) return;
+    const seed = Math.floor(Math.random() * 2 ** 31);
+    const next = execute(workflow, run.payload, {
+      seed,
+      startedAt: Date.now(),
+      runId: `run_${seed.toString(36)}`,
+    });
+    addRuns([next]);
+    toast(
+      next.status === "failed" ? "Replay failed again" : "Replay finished",
+      next.status === "failed" ? "danger" : "success",
+    );
+    router.push(`/app/runs/${next.id}`);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,14 +63,21 @@ export function RunDetail({ id }: { id: string }) {
         title={workflow?.name ?? "Deleted workflow"}
         description={`Run ${run.id}`}
         actions={
-          workflow && (
-            <Link
-              href={`/app/workflows/${workflow.id}`}
-              className="inline-flex min-h-11 items-center text-sm text-primary"
-            >
-              Open workflow
-            </Link>
-          )
+          <>
+            {workflow && (
+              <Link
+                href={`/app/workflows/${workflow.id}`}
+                className="inline-flex min-h-11 items-center px-2 text-sm text-primary"
+              >
+                Open workflow
+              </Link>
+            )}
+            {workflow && run.status === "failed" && (
+              <Button icon="play" onClick={replay}>
+                Replay with the same data
+              </Button>
+            )}
+          </>
         }
       />
       <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
@@ -88,37 +108,16 @@ export function RunDetail({ id }: { id: string }) {
         </p>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        {workflow && size && canvas && (
-          <div className="h-[560px] overflow-hidden rounded-md border border-line">
-            <CanvasViewport
-              contentWidth={size.width}
-              contentHeight={size.height}
-              fitKey={run.id}
-            >
-              <WorkflowDiagram
-                trigger={workflow.trigger}
-                steps={workflow.steps}
-                path={runPath(run.trace)}
-              />
-            </CanvasViewport>
-          </div>
-        )}
-        <section aria-labelledby="trace-title" className="flex flex-col gap-3">
-          <h2 id="trace-title" className="text-lg font-semibold">
-            Steps
-          </h2>
-          <TraceList workflow={workflow} run={run} />
-          <details className="rounded-md border border-line bg-surface">
-            <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium">
-              Trigger data
-            </summary>
-            <pre className="overflow-x-auto border-t border-line bg-sunken px-3 py-2 font-mono text-xs">
-              {JSON.stringify(run.payload, null, 2)}
-            </pre>
-          </details>
-        </section>
-      </div>
+      <RunDebugger key={run.id} run={run} workflow={workflow} />
+
+      <details className="rounded-md border border-line bg-surface">
+        <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium">
+          Trigger data
+        </summary>
+        <pre className="overflow-x-auto border-t border-line bg-sunken px-3 py-2 font-mono text-xs">
+          {JSON.stringify(maskRecord(run.payload), null, 2)}
+        </pre>
+      </details>
     </div>
   );
 }

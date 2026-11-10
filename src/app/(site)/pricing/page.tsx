@@ -24,7 +24,7 @@ export default function PricingPage() {
       </div>
 
       <section aria-labelledby="compare-title" className="mt-20">
-        <h2 id="compare-title" className="text-2xl font-bold">
+        <h2 id="compare-title" className="reveal-on-scroll text-2xl font-bold">
           Compare plans
         </h2>
         <div className="mt-4 overflow-x-auto">
@@ -69,7 +69,7 @@ export default function PricingPage() {
       </section>
 
       <section aria-labelledby="faq-title" className="mt-20 max-w-3xl">
-        <h2 id="faq-title" className="text-2xl font-bold">
+        <h2 id="faq-title" className="reveal-on-scroll text-2xl font-bold">
           Questions
         </h2>
         <div className="mt-4 divide-y divide-line border-y border-line">

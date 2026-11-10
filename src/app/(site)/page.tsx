@@ -2,6 +2,7 @@ import { Hero } from "@/components/site/home/Hero";
 import { HowItWorks } from "@/components/site/home/HowItWorks";
 import { PlaybookColumns } from "@/components/site/home/PlaybookColumns";
 import { SavingsBand } from "@/components/site/home/SavingsBand";
+import { SentenceBuilder } from "@/components/site/home/SentenceBuilder";
 import { JsonLd } from "@/components/site/JsonLd";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
@@ -17,6 +18,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <SentenceBuilder />
       <HowItWorks />
       <PlaybookColumns />
       <SavingsBand />

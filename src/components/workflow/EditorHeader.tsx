@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { Button, IconButton } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/Choice";
+import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/ui/Icon";
+import { toast } from "@/components/ui/Toaster";
+import type { Issue } from "@/lib/engine/lint";
 import type { Workflow } from "@/lib/engine/types";
 import { useWorkspace } from "@/lib/store/workspace";
 
@@ -15,6 +17,9 @@ type EditorHeaderProps = {
   onRedo: () => void;
   onSettings: () => void;
   onTest: () => void;
+  issues: Issue[];
+  onProblems: () => void;
+  menu?: React.ReactNode;
 };
 
 export function EditorHeader({
@@ -25,8 +30,24 @@ export function EditorHeader({
   onRedo,
   onSettings,
   onTest,
+  issues,
+  onProblems,
+  menu,
 }: EditorHeaderProps) {
   const setEnabled = useWorkspace((state) => state.setEnabled);
+  const errors = issues.filter((issue) => issue.severity === "error").length;
+
+  function toggle(value: boolean) {
+    if (value && errors > 0) {
+      toast(
+        `Fix ${errors} ${errors === 1 ? "error" : "errors"} before turning this on`,
+        "danger",
+      );
+      onProblems();
+      return;
+    }
+    setEnabled(workflow.id, value);
+  }
 
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-4 py-3 sm:px-6">
@@ -44,9 +65,20 @@ export function EditorHeader({
       </div>
       <Switch
         checked={workflow.enabled}
-        onChange={(value) => setEnabled(workflow.id, value)}
+        onChange={toggle}
         label={workflow.enabled ? "On" : "Off"}
       />
+      {issues.length > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="alert"
+          onClick={onProblems}
+          className={errors ? "text-danger" : "text-warning"}
+        >
+          {issues.length} {issues.length === 1 ? "problem" : "problems"}
+        </Button>
+      )}
       <div className="ml-auto flex items-center md:ml-0">
         <IconButton
           icon="undo"
@@ -65,6 +97,7 @@ export function EditorHeader({
           label="Workflow settings"
           onClick={onSettings}
         />
+        {menu}
       </div>
       <Button icon="play" onClick={onTest}>
         Test run

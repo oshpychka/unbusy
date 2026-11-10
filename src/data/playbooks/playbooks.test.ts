@@ -63,3 +63,12 @@ describe("playbooks", () => {
     }
   });
 });
+
+describe("sentences", () => {
+  it("cover every playbook exactly once", async () => {
+    const { sentences } = await import("@/data/sentences");
+    expect(sentences.map((item) => item.slug).sort()).toEqual(
+      playbooks.map((playbook) => playbook.slug).sort(),
+    );
+  });
+});

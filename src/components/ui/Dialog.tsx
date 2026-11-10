@@ -10,6 +10,7 @@ type DialogProps = {
   title: string;
   description?: string;
   variant?: "modal" | "sheet";
+  size?: "md" | "lg";
   className?: string;
   children: React.ReactNode;
 };
@@ -20,6 +21,7 @@ export function Dialog({
   title,
   description,
   variant = "modal",
+  size = "md",
   className,
   children,
 }: DialogProps) {
@@ -53,10 +55,13 @@ export function Dialog({
       }}
       aria-labelledby={titleId}
       className={cn(
-        "m-0 max-h-none max-w-none border-line bg-surface p-0 text-text shadow-overlay backdrop:bg-overlay",
+        "m-0 border-line bg-surface p-0 text-text shadow-overlay backdrop:bg-overlay",
         variant === "modal"
-          ? "inset-x-4 top-[10vh] mx-auto w-auto max-w-lg rounded-lg border sm:inset-x-0 sm:w-full"
-          : "inset-x-0 top-auto bottom-0 w-full max-w-none rounded-t-lg border-t pb-[env(safe-area-inset-bottom)] md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-[420px] md:rounded-none md:border-t-0 md:border-l",
+          ? cn(
+              "inset-x-4 top-[6vh] mx-auto max-h-[88dvh] w-auto overflow-y-auto rounded-lg border sm:inset-x-0 sm:w-full",
+              size === "lg" ? "max-w-5xl" : "max-w-lg",
+            )
+          : "inset-x-0 top-auto bottom-0 max-h-none w-full max-w-none rounded-t-lg border-t pb-[env(safe-area-inset-bottom)] md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-[420px] md:rounded-none md:border-t-0 md:border-l",
         className,
       )}
     >

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { IconButton } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { cn } from "@/lib/cn";
+import { openCommandPalette } from "./CommandPalette";
 import { appNav, isActive, settingsNav } from "./app-nav";
 
 export function AppTopBar() {
@@ -13,9 +15,10 @@ export function AppTopBar() {
   const settingsActive = isActive(pathname, settingsNav.href);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-2 pl-4 md:hidden">
+    <header className="no-print sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-2 pl-4 md:hidden">
       <Logo href="/" className="text-lg" />
       <div className="flex items-center">
+        <IconButton icon="search" label="Search" onClick={openCommandPalette} />
         <ThemeToggle />
         <Link
           href={settingsNav.href}
@@ -39,7 +42,7 @@ export function AppTabBar() {
   return (
     <nav
       aria-label="App"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="grid grid-cols-5">
         {appNav.map((item) => {

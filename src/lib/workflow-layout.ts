@@ -30,10 +30,18 @@ export type LayoutPlaceholder = {
   slot: Slot;
   branch: { stepId: string; key: string };
 };
+export type LayoutFrame = {
+  key: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export type Layout = {
   nodes: LayoutNode[];
   edges: LayoutEdge[];
   placeholders: LayoutPlaceholder[];
+  frames: LayoutFrame[];
   bounds: { minX: number; maxX: number; maxY: number };
 };
 
@@ -44,7 +52,7 @@ function branchLabel(step: Step, key: string) {
       ? "Otherwise"
       : step.cases.find((item) => item.id === key)?.label;
   if (step.type === "loop") return "For each";
-  return "On error";
+  return key === "success" ? "Success" : "If it fails";
 }
 
 function widthOfList(steps: Step[]): number {
@@ -52,9 +60,9 @@ function widthOfList(steps: Step[]): number {
 }
 
 function visibleBranches(step: Step) {
-  return branchKeys(step).filter(
-    (key) => !(step.type === "action" && key === "fallback"),
-  );
+  return step.type === "action" && step.onError === "fallback"
+    ? ["success", "fallback"]
+    : branchKeys(step);
 }
 
 function widthOfStep(step: Step): number {
@@ -63,7 +71,7 @@ function widthOfStep(step: Step): number {
   const total =
     keys.reduce((sum, key) => sum + widthOfList(listFor(step, key) ?? []), 0) +
     gapX * (keys.length - 1);
-  return Math.max(nodeWidth, total);
+  return Math.max(nodeWidth, step.type === "loop" ? total + 28 : total);
 }
 
 function elbow(from: Point, to: Point): Point[] {
@@ -84,6 +92,7 @@ export function layoutWorkflow(steps: Step[]): Layout {
   ];
   const edges: LayoutEdge[] = [];
   const placeholders: LayoutPlaceholder[] = [];
+  const frames: LayoutFrame[] = [];
   let minX = -nodeWidth / 2;
   let maxX = nodeWidth / 2;
   let maxY = nodeHeight;
@@ -112,6 +121,7 @@ export function layoutWorkflow(steps: Step[]): Layout {
         label: branchInfo.label,
         branch: branchInfo,
       });
+      if (branch === "success") return { exit: { x: cx, y: top }, tail: slot };
       placeholders.push({
         key: `${parentId}.${branch}.empty`,
         x: cx,
@@ -173,6 +183,19 @@ export function layoutWorkflow(steps: Step[]): Layout {
     });
 
     const mergeY = Math.max(...exits.map((item) => item.exit.y)) + gapY / 2;
+    if (step.type === "loop") {
+      const width = widths[0]! + 28;
+      const top = bottom.y + gapY - 46;
+      frames.push({
+        key: `${step.id}.frame`,
+        x: cx - width / 2,
+        y: top,
+        width,
+        height: mergeY - 6 - top,
+      });
+      minX = Math.min(minX, cx - width / 2);
+      maxX = Math.max(maxX, cx + width / 2);
+    }
     const merge = { x: cx, y: mergeY };
     for (const item of exits) {
       const points: Point[] =
@@ -182,8 +205,11 @@ export function layoutWorkflow(steps: Step[]): Layout {
       edges.push({
         key: `${step.id}.${item.key}.out`,
         points,
-        plus: { x: item.exit.x, y: (item.exit.y + mergeY) / 2 },
-        slot: item.tail,
+        plus:
+          item.key === "success"
+            ? undefined
+            : { x: item.exit.x, y: (item.exit.y + mergeY) / 2 },
+        slot: item.key === "success" ? undefined : item.tail,
         branch: { stepId: step.id, key: item.key },
       });
     }
@@ -203,5 +229,5 @@ export function layoutWorkflow(steps: Step[]): Layout {
   edges.push({ key: "root.end", points: [exit, end], plus: end, slot: tail });
   track(0, end.y + 24);
 
-  return { nodes, edges, placeholders, bounds: { minX, maxX, maxY } };
+  return { nodes, edges, placeholders, frames, bounds: { minX, maxX, maxY } };
 }

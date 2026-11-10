@@ -2,6 +2,7 @@ import { evaluateAll } from "./conditions";
 import { stepTitle } from "./describe";
 import { renderValue, type Context } from "./expressions";
 import { between, createRandom } from "./random";
+import type { RateLimiter } from "./ratelimit";
 import { SimulatedError, simulate } from "./simulate";
 import type {
   ActionStep,
@@ -18,6 +19,7 @@ export type ExecuteOptions = {
   startedAt: number;
   runId?: string;
   failureRate?: number;
+  limiter?: RateLimiter;
 };
 
 type Outcome = "continue" | "failed" | "filtered";
@@ -74,12 +76,25 @@ export function execute(
       input[key] = renderValue(template, ctx);
 
     const entry = base(step, path, input);
+    const hasFallback = step.onError === "fallback";
     const retry = step.retry ?? workflow.settings.retry;
     const maxAttempts = 1 + Math.max(0, retry.attempts);
     let error: SimulatedError | undefined;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       entry.attempts = attempt;
+      if (options.limiter) {
+        const throttle = options.limiter.acquire(step.app, clock);
+        entry.throttledMs += throttle.waitMs;
+        clock += throttle.waitMs;
+        if (throttle.rejected) {
+          clock += between(random, 80, 200);
+          error = new SimulatedError("429 Too Many Requests", true);
+          if (attempt === maxAttempts) break;
+          clock += retry.backoffMs * 2 ** (attempt - 1);
+          continue;
+        }
+      }
       clock += between(random, 150, 900);
       try {
         const result = simulate(
@@ -92,7 +107,12 @@ export function execute(
         );
         outputs[step.id] = result.output;
         recovered += result.recovered ?? 0;
-        record({ ...entry, status: "ok", output: result.output });
+        record({
+          ...entry,
+          status: "ok",
+          output: result.output,
+          branch: hasFallback ? "success" : undefined,
+        });
         return "continue";
       } catch (caught) {
         error =
@@ -105,13 +125,17 @@ export function execute(
     }
 
     const message = error?.message ?? "Unknown error";
-    record({ ...entry, status: "failed", output: null, error: message });
-    const policy =
-      step.onError ??
-      (step.fallback?.length ? "fallback" : workflow.settings.onError);
+    record({
+      ...entry,
+      status: "failed",
+      output: null,
+      error: message,
+      branch: hasFallback ? "fallback" : undefined,
+    });
+    const policy = step.onError ?? workflow.settings.onError;
     if (policy === "continue") return "continue";
-    if (policy === "fallback" && step.fallback)
-      return runList(step.fallback, `${step.id}.fallback`, item);
+    if (policy === "fallback")
+      return runList(step.fallback ?? [], `${step.id}.fallback`, item);
     runError = `${stepTitle(step)}: ${message}`;
     return "failed";
   }

@@ -108,6 +108,15 @@ export function SettingsForm() {
           <Button variant="secondary" icon="download" onClick={exportData}>
             Export workspace
           </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              updateSettings({ seenTour: false });
+              toast("The tour will show again", "success");
+            }}
+          >
+            Show the tour again
+          </Button>
           <Button variant="danger" onClick={() => setConfirm(true)}>
             Reset demo
           </Button>

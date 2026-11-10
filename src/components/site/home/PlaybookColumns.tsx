@@ -12,7 +12,7 @@ export function PlaybookColumns() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2
             id="playbooks-title"
-            className="max-w-xl text-[clamp(1.75rem,4vw,2.5rem)] font-bold"
+            className="reveal-on-scroll max-w-xl text-[clamp(1.75rem,4vw,2.5rem)] font-bold"
           >
             Start from a playbook that fits your business
           </h2>

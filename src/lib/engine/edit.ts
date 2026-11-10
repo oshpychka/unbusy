@@ -22,7 +22,9 @@ export function listFor(step: Step, branch: string): Step[] | null {
     case "loop":
       return branch === "steps" ? step.steps : null;
     case "action":
-      return branch === "fallback" ? (step.fallback ?? null) : null;
+      return branch === "fallback" && step.onError === "fallback"
+        ? (step.fallback ?? [])
+        : null;
     default:
       return null;
   }
@@ -76,7 +78,7 @@ export function branchKeys(step: Step): string[] {
     case "loop":
       return ["steps"];
     case "action":
-      return step.fallback ? ["fallback"] : [];
+      return step.onError === "fallback" ? ["fallback"] : [];
     default:
       return [];
   }

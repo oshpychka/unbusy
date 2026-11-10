@@ -210,3 +210,73 @@ describe("execute", () => {
     }
   });
 });
+
+describe("execute with error paths and rate limits", () => {
+  const steps = [
+    action(
+      "text",
+      "sms",
+      "send",
+      { to: "bad", message: "Hi" },
+      {
+        onError: "fallback",
+        fallback: [
+          action("note", "chat", "post", {
+            channel: "#ops",
+            text: "SMS failed",
+          }),
+        ],
+      },
+    ),
+    action("after", "chat", "post", { channel: "#ops", text: "done" }),
+  ];
+  const flow: Workflow = {
+    id: "wf",
+    name: "t",
+    description: "",
+    enabled: true,
+    trigger: { app: "forms", event: "submitted", config: {} },
+    steps,
+    settings: {
+      manualMinutes: 1,
+      onError: "stop",
+      retry: { attempts: 0, backoffMs: 0 },
+    },
+    createdAt: "",
+    updatedAt: "",
+  };
+
+  it("runs the error path and then continues", () => {
+    const run = execute(
+      flow,
+      {},
+      { seed: 1, startedAt: start, failureRate: 0 },
+    );
+    expect(run.status).toBe("success");
+    expect(run.trace.map((entry) => entry.stepId)).toEqual([
+      "text",
+      "note",
+      "after",
+    ]);
+    expect(run.trace[0]?.branch).toBe("fallback");
+    expect(run.trace[1]?.path).toBe("text.fallback.0");
+  });
+
+  it("records throttling when runs share a limiter", async () => {
+    const { createRateLimiter } = await import("./ratelimit");
+    const limiter = createRateLimiter();
+    const postFlow = {
+      ...flow,
+      steps: [action("post", "chat", "post", { channel: "#ops", text: "hi" })],
+    };
+    const runs = Array.from({ length: 5 }, (_, index) =>
+      execute(
+        postFlow,
+        {},
+        { seed: index + 1, startedAt: start, failureRate: 0, limiter },
+      ),
+    );
+    expect(runs[0]?.trace[0]?.throttledMs).toBe(0);
+    expect(runs[4]?.trace[0]?.throttledMs).toBeGreaterThan(0);
+  });
+});

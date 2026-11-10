@@ -13,7 +13,7 @@ type StepListProps = {
   path?: RunPath;
   activeStep?: string | null;
   selected: string | null;
-  warnings?: Set<string>;
+  issues?: Map<string, "error" | "warning">;
   onSelect: (id: string) => void;
   onInsert: (slot: Slot) => void;
 };
@@ -25,7 +25,7 @@ function branchLabel(step: Step, key: string) {
       ? "Otherwise"
       : `When ${step.cases.find((item) => item.id === key)?.label ?? ""}`;
   if (step.type === "loop") return "For each item";
-  return "On error";
+  return "If it fails";
 }
 
 export function StepList(props: StepListProps) {
@@ -76,11 +76,9 @@ function Branch(props: BranchProps) {
 }
 
 function Row(props: BranchProps & { step: Step }) {
-  const { step, path, activeStep, selected, warnings, onSelect } = props;
+  const { step, path, activeStep, selected, issues, onSelect } = props;
   const meta = stepMeta(step);
-  const keys = branchKeys(step).filter(
-    (key) => !(step.type === "action" && key === "fallback"),
-  );
+  const keys = branchKeys(step);
 
   let state: StepCardState = "idle";
   if (activeStep === step.id) state = "active";
@@ -102,7 +100,7 @@ function Row(props: BranchProps & { step: Step }) {
           {...meta}
           state={state}
           selected={selected === step.id}
-          warning={warnings?.has(step.id)}
+          issue={issues?.get(step.id)}
         />
       </button>
       {keys.map((key) => (

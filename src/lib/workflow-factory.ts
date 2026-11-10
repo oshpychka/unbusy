@@ -1,5 +1,6 @@
 import type { Playbook } from "@/data/playbooks";
 import type { Workflow } from "./engine/types";
+import type { WorkflowDraft } from "./engine/validate";
 
 export const defaultSettings: Workflow["settings"] = {
   manualMinutes: 5,
@@ -26,3 +27,11 @@ export function workflowFromPlaybook(
     updatedAt: createdAt,
   };
 }
+
+export const blankDraft: WorkflowDraft = {
+  name: "Untitled workflow",
+  description: "",
+  trigger: { app: "forms", event: "submitted", config: { form: "Contact" } },
+  steps: [],
+  settings: defaultSettings,
+};

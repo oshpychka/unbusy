@@ -21,9 +21,10 @@ type WorkflowDiagramProps = {
   path?: RunPath;
   activeStep?: string | null;
   selected?: string | null;
-  warnings?: Set<string>;
+  issues?: Map<string, "error" | "warning">;
   onSelect?: (id: string) => void;
   onInsert?: (slot: Slot) => void;
+  token?: boolean;
 };
 
 function toPath(points: Point[]) {
@@ -47,9 +48,10 @@ export function WorkflowDiagram({
   path,
   activeStep,
   selected,
-  warnings,
+  issues,
   onSelect,
   onInsert,
+  token,
 }: WorkflowDiagramProps) {
   const layout = layoutWorkflow(steps);
   const { width, height, offsetX } = diagramSize(steps);
@@ -68,6 +70,23 @@ export function WorkflowDiagram({
 
   return (
     <div className="relative" style={{ width, height }}>
+      {layout.frames.map((frame) => (
+        <div
+          key={frame.key}
+          aria-hidden
+          className="absolute rounded-lg border border-dashed border-line-strong bg-sunken/40"
+          style={{
+            left: frame.x + offsetX,
+            top: frame.y + padding,
+            width: frame.width,
+            height: frame.height,
+          }}
+        >
+          <span className="absolute right-2 bottom-1 text-[11px] text-muted">
+            Repeats for each item
+          </span>
+        </div>
+      ))}
       <svg
         width={width}
         height={height}
@@ -105,6 +124,29 @@ export function WorkflowDiagram({
           </span>
         );
       })}
+
+      {token &&
+        activeStep &&
+        path &&
+        (() => {
+          const edge = layout.edges.find(
+            (item) =>
+              item.toStep === activeStep &&
+              (!item.branch ||
+                path.branches.has(`${item.branch.stepId}:${item.branch.key}`)),
+          );
+          if (!edge) return null;
+          return (
+            <span
+              key={`token-${activeStep}`}
+              aria-hidden
+              className="run-token pointer-events-none absolute top-0 left-0 z-10 size-3 rounded-full border-2 border-text bg-signal"
+              style={{
+                offsetPath: `path("${toPath(edge.points.map(shift))}")`,
+              }}
+            />
+          );
+        })()}
 
       {layout.placeholders.map((item) => {
         const point = shift(item);
@@ -150,7 +192,7 @@ export function WorkflowDiagram({
             {...meta}
             state={state}
             selected={selected === id}
-            warning={warnings?.has(id)}
+            issue={issues?.get(id)}
           />
         );
         const style = {
@@ -184,6 +226,20 @@ export function WorkflowDiagram({
           if (!edge.plus || !edge.slot) return null;
           const point = shift(edge.plus);
           const slot = edge.slot;
+          if (steps.length === 0) {
+            return (
+              <button
+                key={`${edge.key}-first`}
+                type="button"
+                onClick={() => onInsert(slot)}
+                className="absolute flex h-11 -translate-x-1/2 items-center gap-2 rounded-md border border-dashed border-primary bg-surface px-4 text-sm font-medium whitespace-nowrap text-primary hover:bg-sunken"
+                style={{ left: point.x, top: point.y - 6 }}
+              >
+                <Icon name="plus" size={16} />
+                Add the first step
+              </button>
+            );
+          }
           return (
             <button
               key={`${edge.key}-plus`}

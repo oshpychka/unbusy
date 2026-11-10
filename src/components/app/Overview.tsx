@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DailyRunsChart } from "@/components/charts/DailyRunsChart";
 import { Icon } from "@/components/ui/Icon";
-import { Skeleton } from "@/components/ui/States";
+import { EmptyState, Skeleton } from "@/components/ui/States";
 import { useWorkspaceReady } from "@/hooks/useWorkspaceReady";
 import { runsByDay, runsSince, summarize } from "@/lib/analytics";
 import {
@@ -136,7 +136,25 @@ export function Overview() {
             All runs
           </Link>
         </div>
-        <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface">
+        {runs.length === 0 && (
+          <EmptyState
+            icon="runs"
+            title="No runs yet"
+            text="Turn a workflow on or run a test, and its runs will show up here."
+            action={
+              <Link href="/app/workflows" className="text-primary underline">
+                Go to workflows
+              </Link>
+            }
+          />
+        )}
+        <ul
+          className={
+            runs.length
+              ? "flex flex-col divide-y divide-line rounded-md border border-line bg-surface"
+              : "hidden"
+          }
+        >
           {runs.slice(0, 8).map((run) => (
             <li
               key={run.id}

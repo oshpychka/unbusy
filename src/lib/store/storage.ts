@@ -25,3 +25,14 @@ export const safeStorage: StateStorage = {
     }
   },
 };
+
+export function storageWorks() {
+  try {
+    const key = "unbusy-check";
+    localStorage.setItem(key, "1");
+    localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}

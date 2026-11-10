@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 import { BarList } from "@/components/charts/BarList";
 import { DailyRunsChart } from "@/components/charts/DailyRunsChart";
 import { Heatmap } from "@/components/charts/Heatmap";
+import { ButtonLink } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
-import { Skeleton } from "@/components/ui/States";
+import { EmptyState, Skeleton } from "@/components/ui/States";
 import { useUrlState } from "@/hooks/useUrlState";
 import { useWorkspaceReady } from "@/hooks/useWorkspaceReady";
 import {
@@ -55,15 +56,24 @@ export function Analytics() {
         title="Analytics"
         description="Hours and dollars your workflows saved."
         actions={
-          <Segmented
-            label="Period"
-            value={range}
-            onChange={setRange}
-            options={[
-              { value: "30", label: "30 days" },
-              { value: "7", label: "7 days" },
-            ]}
-          />
+          <>
+            <ButtonLink
+              href="/app/analytics/report"
+              variant="secondary"
+              icon="download"
+            >
+              Printable report
+            </ButtonLink>
+            <Segmented
+              label="Period"
+              value={range}
+              onChange={setRange}
+              options={[
+                { value: "30", label: "30 days" },
+                { value: "7", label: "7 days" },
+              ]}
+            />
+          </>
         }
       />
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -96,6 +106,13 @@ export function Analytics() {
         .
       </p>
 
+      {summary.runs === 0 && (
+        <EmptyState
+          icon="chart"
+          title="Nothing to measure in this period"
+          text="Charts fill in as workflows run. Try a longer period or reset the demo in settings."
+        />
+      )}
       <section className="rounded-md border border-line bg-surface p-4">
         <DailyRunsChart
           points={data.points}

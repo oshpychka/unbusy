@@ -1,13 +1,13 @@
 import { action, when } from "@/lib/engine/build";
-import type { Step, Trigger } from "@/lib/engine/types";
+import type { Step, Trigger, Workflow } from "@/lib/engine/types";
 
-export const heroTrigger: Trigger = {
+const heroTrigger: Trigger = {
   app: "invoices",
   event: "overdue",
   config: {},
 };
 
-export const heroSteps: Step[] = [
+const heroSteps: Step[] = [
   when(
     "how_late",
     "More than 30 days late?",
@@ -42,3 +42,32 @@ export const heroSteps: Step[] = [
     ],
   ),
 ];
+
+export const heroWorkflow: Workflow = {
+  id: "hero",
+  name: "Chase unpaid invoices",
+  description: "",
+  enabled: true,
+  trigger: heroTrigger,
+  steps: heroSteps,
+  settings: {
+    manualMinutes: 12,
+    onError: "stop",
+    retry: { attempts: 0, backoffMs: 0 },
+  },
+  createdAt: "",
+  updatedAt: "",
+};
+
+export function heroPayload(daysOverdue: number) {
+  return {
+    number: "INV-1042",
+    client_name: "Harbor Dental Group",
+    client_email: "billing@harbordental.example",
+    client_phone: "(206) 555-0118",
+    amount: 1850,
+    due_date: "2026-10-01",
+    days_overdue: daysOverdue,
+    reminders_sent: 1,
+  };
+}

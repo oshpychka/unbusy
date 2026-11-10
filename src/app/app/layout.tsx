@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { AppSidebar } from "@/components/app/AppSidebar";
+import { CommandPalette } from "@/components/app/CommandPalette";
 import { AppTabBar, AppTopBar } from "@/components/app/AppMobileBar";
+import { StorageNotice } from "@/components/app/StorageNotice";
+import { WelcomeTour } from "@/components/app/WelcomeTour";
 import { SkipLink } from "@/components/ui/SkipLink";
 import { Toaster } from "@/components/ui/Toaster";
 
@@ -16,6 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopBar />
+        <StorageNotice />
         <main
           id="main"
           tabIndex={-1}
@@ -26,6 +30,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <AppTabBar />
       <Toaster />
+      <CommandPalette />
+      <WelcomeTour />
     </div>
   );
 }

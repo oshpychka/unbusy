@@ -10,7 +10,7 @@ type StepCardProps = {
   subtitle: string;
   state?: StepCardState;
   selected?: boolean;
-  warning?: boolean;
+  issue?: "error" | "warning";
   className?: string;
 };
 
@@ -21,7 +21,7 @@ export function StepCard({
   subtitle,
   state = "idle",
   selected,
-  warning,
+  issue,
   className,
 }: StepCardProps) {
   return (
@@ -61,12 +61,15 @@ export function StepCard({
       </span>
       {state === "ok" && <StatusDot className="bg-success" label="Succeeded" />}
       {state === "failed" && <StatusDot className="bg-danger" label="Failed" />}
-      {warning && state === "idle" && (
+      {issue && state === "idle" && (
         <Icon
           name="alert"
           size={16}
-          label="Needs attention"
-          className="shrink-0 text-warning"
+          label={issue === "error" ? "Has errors" : "Has warnings"}
+          className={cn(
+            "shrink-0",
+            issue === "error" ? "text-danger" : "text-warning",
+          )}
         />
       )}
     </div>

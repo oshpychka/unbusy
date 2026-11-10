@@ -1,26 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, Skeleton } from "@/components/ui/States";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useWorkflowShortcuts } from "@/hooks/useWorkflowShortcuts";
 import { useRunPlayback } from "@/hooks/useRunPlayback";
+import { useTestPayload } from "@/hooks/useTestPayload";
 import { useWorkspaceReady } from "@/hooks/useWorkspaceReady";
 import { createStep, insertStep, type Slot } from "@/lib/engine/edit";
-import { execute } from "@/lib/engine/executor";
-import { samplePayload } from "@/lib/engine/samples";
+import { issueMap } from "@/lib/engine/issue-map";
+import { lintWorkflow } from "@/lib/engine/lint";
 import type { AppId, DataRecord, StepType } from "@/lib/engine/types";
 import { useEditor } from "@/lib/store/editor";
 import { useWorkspace } from "@/lib/store/workspace";
 import { AddStepDialog } from "./AddStepDialog";
+import { BatchDialog } from "./BatchDialog";
 import { EditorHeader } from "./EditorHeader";
+import { EditorMenu } from "./EditorMenu";
 import { CanvasViewport } from "./CanvasViewport";
 import { StepPanel } from "./panel/StepPanel";
+import { ProblemsDialog } from "./ProblemsDialog";
+import { ShortcutsDialog } from "./ShortcutsDialog";
+import { TestBanner } from "./TestBanner";
 import { StepList } from "./StepList";
-import { parsePayload, TestRunPanel } from "./TestRunPanel";
+import { TestRunPanel } from "./TestRunPanel";
 import { diagramSize, WorkflowDiagram } from "./WorkflowDiagram";
 
 type Tab = "configure" | "test";
@@ -30,40 +36,35 @@ export function WorkflowEditor({ id }: { id: string }) {
   const workflow = useWorkspace((state) =>
     state.workflows.find((item) => item.id === id),
   );
-  const {
-    open,
-    select,
-    change,
-    undo,
-    redo,
-    selected,
-    testRun,
-    setTestRun,
-    past,
-    future,
-  } = useEditor();
+  const { open, select, change, undo, redo, selected, testRun, past, future } =
+    useEditor();
   const wide = useMediaQuery("(min-width: 1024px)", true);
   const canvas = useMediaQuery("(min-width: 768px)", true);
   const [tab, setTab] = useState<Tab>("configure");
   const [sheet, setSheet] = useState<Tab | null>(null);
   const [insertAt, setInsertAt] = useState<Slot | null>(null);
-  const [sampleSeed, setSampleSeed] = useState(1);
-  const [payloadText, setPayloadText] = useState<string | null>(null);
-  const [openedAt] = useState(() => Date.now());
   const playback = useRunPlayback(testRun);
   const trigger = workflow?.trigger;
+  const [problemsOpen, setProblemsOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const startBatch = useEditor((state) => state.startBatch);
+  const issues = useMemo(
+    () => (workflow ? lintWorkflow(workflow) : []),
+    [workflow],
+  );
+  const issuesByTarget = useMemo(() => issueMap(issues), [issues]);
 
   useEffect(() => open(id), [open, id]);
 
-  const defaultPayload = useMemo(
-    () =>
-      trigger
-        ? JSON.stringify(samplePayload(trigger, sampleSeed, openedAt), null, 2)
-        : "{}",
-    [trigger, sampleSeed, openedAt],
-  );
-  const text = payloadText ?? defaultPayload;
-  const payload = parsePayload(text);
+  const { text, payload, setText, newSample } = useTestPayload(trigger);
+
+  const startTest = useEditor((state) => state.startTest);
+  const testShortcut = useCallback(() => {
+    setTab("test");
+    if (payload) startTest(payload);
+  }, [payload, startTest]);
+  useWorkflowShortcuts(testShortcut);
 
   if (!ready) return <Skeleton className="h-[70dvh] w-full" />;
   if (!workflow) {
@@ -105,16 +106,8 @@ export function WorkflowEditor({ id }: { id: string }) {
   }
 
   function runTest(data: DataRecord) {
-    if (!workflow) return;
     if (!wide) setSheet(null);
-    setTestRun(
-      execute(workflow, data, {
-        seed: Date.now() % 100000,
-        startedAt: Date.now(),
-        runId: `test_${Date.now().toString(36)}`,
-        failureRate: 0,
-      }),
-    );
+    startTest(data);
   }
 
   const size = diagramSize(workflow.steps);
@@ -132,20 +125,22 @@ export function WorkflowEditor({ id }: { id: string }) {
       <TestRunPanel
         workflow={workflow}
         payloadText={text}
-        onPayloadText={setPayloadText}
-        onNewSample={() => {
-          setPayloadText(null);
-          setSampleSeed((seed) => seed + 1);
-        }}
+        onPayloadText={setText}
+        onNewSample={newSample}
         onRun={runTest}
         run={testRun}
         done={playback.done}
+        onBatch={() => {
+          startBatch();
+          setBatchOpen(true);
+        }}
       />
     ) : (
       <StepPanel
         workflow={workflow}
         selected={selected}
         payload={payload}
+        issues={issues.filter((issue) => issue.target === (selected ?? ""))}
         onChange={change}
         onSelect={choose}
       />
@@ -159,6 +154,14 @@ export function WorkflowEditor({ id }: { id: string }) {
         canRedo={future.length > 0}
         onUndo={undo}
         onRedo={redo}
+        issues={issues}
+        onProblems={() => setProblemsOpen(true)}
+        menu={
+          <EditorMenu
+            workflow={workflow}
+            onShortcuts={() => setShortcutsOpen(true)}
+          />
+        }
         onSettings={openSettings}
         onTest={() => {
           setTab("test");
@@ -181,6 +184,7 @@ export function WorkflowEditor({ id }: { id: string }) {
                   path={playback.path}
                   activeStep={playback.activeStep}
                   selected={selected}
+                  issues={issuesByTarget}
                   onSelect={choose}
                   onInsert={setInsertAt}
                 />
@@ -189,31 +193,7 @@ export function WorkflowEditor({ id }: { id: string }) {
           ) : (
             <div className="dot-grid px-4 py-5">
               {testRun && playback.done && (
-                <div
-                  role="status"
-                  className="mb-4 flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-3 py-2 text-sm"
-                >
-                  <span
-                    className={
-                      testRun.status === "failed"
-                        ? "text-danger"
-                        : "text-success"
-                    }
-                  >
-                    {testRun.status === "success"
-                      ? "Test run succeeded"
-                      : testRun.status === "failed"
-                        ? "Test run failed"
-                        : "Stopped by a filter"}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSheet("test")}
-                  >
-                    Details
-                  </Button>
-                </div>
+                <TestBanner run={testRun} onDetails={() => setSheet("test")} />
               )}
               <StepList
                 trigger={workflow.trigger}
@@ -221,6 +201,7 @@ export function WorkflowEditor({ id }: { id: string }) {
                 path={playback.path}
                 activeStep={playback.activeStep}
                 selected={selected}
+                issues={issuesByTarget}
                 onSelect={choose}
                 onInsert={setInsertAt}
               />
@@ -257,6 +238,25 @@ export function WorkflowEditor({ id }: { id: string }) {
           {panel}
         </Dialog>
       )}
+      <ProblemsDialog
+        workflow={workflow}
+        issues={issues}
+        open={problemsOpen}
+        onClose={() => setProblemsOpen(false)}
+        onPick={(target) => {
+          setProblemsOpen(false);
+          choose(target);
+        }}
+      />
+      <ShortcutsDialog
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
+      <BatchDialog
+        workflow={workflow}
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+      />
       <AddStepDialog
         open={insertAt !== null}
         onClose={() => setInsertAt(null)}

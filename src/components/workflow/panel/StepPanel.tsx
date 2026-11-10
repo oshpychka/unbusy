@@ -15,13 +15,16 @@ import {
 } from "@/lib/engine/edit";
 import { previewContext } from "@/lib/engine/preview";
 import { scopeAt } from "@/lib/engine/scope";
+import type { Issue } from "@/lib/engine/lint";
 import type { DataRecord, Step, Workflow } from "@/lib/engine/types";
+import { IssueList } from "../IssueList";
 import { ActionEditor } from "./ActionEditor";
 import { DelayEditor } from "./DelayEditor";
 import { LoopEditor } from "./LoopEditor";
 import { SwitchEditor } from "./SwitchEditor";
 import { TransformEditor } from "./TransformEditor";
 import { ConditionsEditor } from "./ConditionsEditor";
+import { ErrorHandling } from "./ErrorHandling";
 import { PanelSection } from "./PanelSection";
 import { TriggerEditor } from "./TriggerEditor";
 import { WorkflowSettings } from "./WorkflowSettings";
@@ -30,6 +33,7 @@ type StepPanelProps = {
   workflow: Workflow;
   selected: string | null;
   payload: DataRecord | null;
+  issues: Issue[];
   onChange: (update: (workflow: Workflow) => Workflow) => void;
   onSelect: (id: string | null) => void;
 };
@@ -38,6 +42,7 @@ export function StepPanel({
   workflow,
   selected,
   payload,
+  issues,
   onChange,
   onSelect,
 }: StepPanelProps) {
@@ -50,12 +55,23 @@ export function StepPanel({
     return { fields, context: previewContext(fields, payload) };
   }, [workflow, step?.id, payload]);
 
+  const issueBox = issues.length > 0 && (
+    <div className="rounded-md border border-line bg-sunken p-3">
+      <IssueList issues={issues} />
+    </div>
+  );
+
   if (selected === "trigger") {
     return (
-      <TriggerEditor
-        trigger={workflow.trigger}
-        onChange={(trigger) => onChange((current) => ({ ...current, trigger }))}
-      />
+      <div className="flex flex-col gap-5">
+        {issueBox}
+        <TriggerEditor
+          trigger={workflow.trigger}
+          onChange={(trigger) =>
+            onChange((current) => ({ ...current, trigger }))
+          }
+        />
+      </div>
     );
   }
 
@@ -77,6 +93,7 @@ export function StepPanel({
 
   return (
     <div className="flex flex-col gap-5">
+      {issueBox}
       <Field
         id={`${step.id}-name`}
         label={`${stepTypeLabels[step.type]} name`}
@@ -94,7 +111,14 @@ export function StepPanel({
       </Field>
 
       {step.type === "action" && (
-        <ActionEditor step={step} scope={scope} onChange={save} />
+        <>
+          <ActionEditor step={step} scope={scope} onChange={save} />
+          <ErrorHandling
+            step={step}
+            settings={workflow.settings}
+            onChange={save}
+          />
+        </>
       )}
       {(step.type === "if" || step.type === "filter") && (
         <PanelSection

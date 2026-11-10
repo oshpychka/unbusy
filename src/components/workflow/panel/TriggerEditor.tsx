@@ -7,6 +7,7 @@ import { triggerEventOf } from "@/lib/engine/describe";
 import type { AppId, Trigger } from "@/lib/engine/types";
 import { InputFieldControl } from "./InputFieldControl";
 import { PanelSection } from "./PanelSection";
+import { ScheduleEditor } from "./ScheduleEditor";
 
 const triggerOptions = apps.flatMap((app) =>
   app.events.map((event) => ({
@@ -40,7 +41,15 @@ export function TriggerEditor({
           />
         </Field>
       </PanelSection>
-      {event && event.config.length > 0 && (
+      {trigger.app === "schedule" && (
+        <ScheduleEditor
+          rule={trigger.config.rule ?? ""}
+          onChange={(rule) =>
+            onChange({ ...trigger, config: { ...trigger.config, rule } })
+          }
+        />
+      )}
+      {event && event.config.length > 0 && trigger.app !== "schedule" && (
         <PanelSection title="Settings">
           {event.config.map((field) => (
             <InputFieldControl

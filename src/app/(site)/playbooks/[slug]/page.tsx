@@ -147,7 +147,7 @@ export default async function PlaybookPage({
       </div>
 
       <section aria-labelledby="related-title" className="mt-16">
-        <h2 id="related-title" className="text-2xl font-bold">
+        <h2 id="related-title" className="reveal-on-scroll text-2xl font-bold">
           Related playbooks
         </h2>
         <ul className="mt-4 divide-y divide-line border-y border-line">

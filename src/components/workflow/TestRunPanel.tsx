@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/States";
 import type { DataRecord, Run, Workflow } from "@/lib/engine/types";
 import { formatDuration } from "@/lib/format";
+import { parsePayload } from "@/hooks/useTestPayload";
 import { TraceList } from "./TraceList";
 
 type TestRunPanelProps = {
@@ -16,18 +17,8 @@ type TestRunPanelProps = {
   onRun: (payload: DataRecord) => void;
   run: Run | null;
   done: boolean;
+  onBatch: () => void;
 };
-
-export function parsePayload(text: string): DataRecord | null {
-  try {
-    const value = JSON.parse(text);
-    return value && typeof value === "object" && !Array.isArray(value)
-      ? value
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 export function TestRunPanel({
   workflow,
@@ -37,6 +28,7 @@ export function TestRunPanel({
   onRun,
   run,
   done,
+  onBatch,
 }: TestRunPanelProps) {
   const payload = parsePayload(payloadText);
 
@@ -100,6 +92,25 @@ export function TestRunPanel({
           </div>
         )}
       </div>
+
+      <section className="flex flex-col gap-2 border-t border-line pt-4">
+        <h3 className="font-sans text-sm font-semibold">
+          What if 50 records came in?
+        </h3>
+        <p className="text-sm text-muted">
+          Run the workflow on 50 sample records arriving over about three
+          minutes. See where each one goes, what failed, and how rate limits
+          slow things down.
+        </p>
+        <Button
+          variant="secondary"
+          icon="branch"
+          className="self-start"
+          onClick={onBatch}
+        >
+          Run 50 records
+        </Button>
+      </section>
     </div>
   );
 }

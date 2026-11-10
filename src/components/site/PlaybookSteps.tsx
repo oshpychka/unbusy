@@ -9,6 +9,7 @@ function branchName(step: Step, key: string) {
     return key === "otherwise"
       ? "Otherwise"
       : `When ${step.cases.find((item) => item.id === key)?.label}`;
+  if (step.type === "action") return "If it fails";
   return "For each item";
 }
 
@@ -16,9 +17,7 @@ function StepItems({ steps }: { steps: Step[] }) {
   return (
     <ol className="flex flex-col gap-3">
       {steps.map((step) => {
-        const keys = branchKeys(step).filter(
-          (key) => !(step.type === "action" && key === "fallback"),
-        );
+        const keys = branchKeys(step);
         return (
           <li key={step.id}>
             <p className="font-medium">{stepTitle(step)}</p>

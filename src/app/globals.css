@@ -180,3 +180,156 @@
     scroll-behavior: auto !important;
   }
 }
+
+@layer components {
+  .range {
+    appearance: none;
+    width: 100%;
+    height: 44px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+
+  .range::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    margin-top: -9px;
+    border: 2px solid var(--text);
+    border-radius: 50%;
+    background: var(--signal);
+  }
+
+  .range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--text);
+    border-radius: 50%;
+    background: var(--signal);
+  }
+
+  .range:focus-visible {
+    outline: none;
+  }
+
+  .range:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .range:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+@keyframes token-travel {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+.run-token {
+  offset-rotate: 0deg;
+  animation: token-travel 380ms var(--ease-out) forwards;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rise-in {
+  animation: rise-in 450ms var(--ease-out) both;
+}
+
+.route-fade {
+  animation: fade-in 200ms var(--ease-out) both;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal-on-scroll {
+    animation: rise-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+
+@media print {
+  :root,
+  [data-theme="dark"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-sunken: #f4f3ef;
+    --text: #15171a;
+    --muted: #5a5f67;
+    --line: #dddad2;
+    --line-strong: #c4c0b5;
+    --primary: #2140c8;
+    --chart: #2140c8;
+    --chart-fail: #c2362b;
+    color-scheme: light;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 60;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.draw-line {
+  stroke-dasharray: 60;
+  animation: draw-line 450ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  .rise-in,
+  .route-fade,
+  .run-token,
+  .draw-line {
+    animation: none !important;
+  }
+}

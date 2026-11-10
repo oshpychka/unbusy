@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { getPlaybook } from "@/data/playbooks";
 import { seedWorkflows } from "@/data/workspace";
 import type { Run, Workflow } from "@/lib/engine/types";
+import type { WorkflowDraft } from "@/lib/engine/validate";
 import { workflowFromPlaybook } from "@/lib/workflow-factory";
 import { seedRuns } from "./seed-runs";
 import { safeStorage } from "./storage";
@@ -23,7 +24,7 @@ type WorkspaceState = {
   resetDemo: () => void;
   saveWorkflow: (workflow: Workflow) => void;
   createFromPlaybook: (slug: string) => string | null;
-  addWorkflow: (workflow: Workflow) => void;
+  addDraft: (draft: WorkflowDraft) => string;
   duplicateWorkflow: (id: string) => string | null;
   deleteWorkflow: (id: string) => void;
   setEnabled: (id: string, enabled: boolean) => void;
@@ -75,8 +76,17 @@ export const useWorkspace = create<WorkspaceState>()(
         });
         return workflow.id;
       },
-      addWorkflow: (workflow) =>
-        set({ workflows: [workflow, ...get().workflows] }),
+      addDraft: (draft) => {
+        const now = new Date().toISOString();
+        const id = newId("wf");
+        set({
+          workflows: [
+            { ...draft, id, enabled: false, createdAt: now, updatedAt: now },
+            ...get().workflows,
+          ],
+        });
+        return id;
+      },
       duplicateWorkflow: (id) => {
         const source = get().workflows.find((item) => item.id === id);
         if (!source) return null;

@@ -12,7 +12,7 @@ export function SavingsBand() {
         <div>
           <h2
             id="savings-title"
-            className="text-[clamp(1.75rem,4vw,2.5rem)] font-bold"
+            className="reveal-on-scroll text-[clamp(1.75rem,4vw,2.5rem)] font-bold"
           >
             A 12-minute reminder sent 25 times a month is five hours.
           </h2>
