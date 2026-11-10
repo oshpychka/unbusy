@@ -24,7 +24,7 @@ type WorkflowDiagramProps = {
   issues?: Map<string, "error" | "warning">;
   onSelect?: (id: string) => void;
   onInsert?: (slot: Slot) => void;
-  token?: boolean;
+  token?: boolean | string;
 };
 
 function toPath(points: Point[]) {
@@ -138,7 +138,7 @@ export function WorkflowDiagram({
           if (!edge) return null;
           return (
             <span
-              key={`token-${activeStep}`}
+              key={typeof token === "string" ? token : `token-${activeStep}`}
               aria-hidden
               className="run-token pointer-events-none absolute top-0 left-0 z-10 size-3 rounded-full border-2 border-text bg-signal"
               style={{
