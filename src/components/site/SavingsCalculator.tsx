@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -51,21 +51,40 @@ const defaults = [
   "appointment-reminders",
 ].map(preset);
 
+function initialFromParams(params: URLSearchParams) {
+  const decoded = params
+    .getAll("t")
+    .map((value) => decodeTask(value, taskNames))
+    .filter((task) => task !== null);
+  const rate = Number(params.get("rate"));
+  return {
+    tasks: decoded.length ? decoded.slice(0, 12) : defaults,
+    rate: Number.isFinite(rate) && rate > 0 && rate <= 1000 ? rate : 45,
+  };
+}
+
+const subscribeToNothing = () => () => {};
+
 export function SavingsCalculator() {
-  const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [tasks, setTasks] = useState<SavingsTask[]>(() => {
-    const decoded = params
-      .getAll("t")
-      .map((value) => decodeTask(value, taskNames))
-      .filter((task) => task !== null);
-    return decoded.length ? decoded.slice(0, 12) : defaults;
-  });
-  const [rate, setRate] = useState(() => {
-    const value = Number(params.get("rate"));
-    return Number.isFinite(value) && value > 0 && value <= 1000 ? value : 45;
-  });
+  const search = useSyncExternalStore(
+    subscribeToNothing,
+    () => window.location.search,
+    () => "",
+  );
+  const fromUrl = useMemo(
+    () => initialFromParams(new URLSearchParams(search)),
+    [search],
+  );
+  const [edited, setEdited] = useState<{
+    tasks: SavingsTask[];
+    rate: number;
+  } | null>(null);
+  const tasks = edited?.tasks ?? fromUrl.tasks;
+  const rate = edited?.rate ?? fromUrl.rate;
+  const setTasks = (next: SavingsTask[]) => setEdited({ tasks: next, rate });
+  const setRate = (next: number) => setEdited({ tasks, rate: next });
   const result = totals(tasks, rate);
 
   function sync(nextTasks: SavingsTask[], nextRate: number) {

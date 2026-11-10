@@ -34,6 +34,9 @@ export function Heatmap({ grid, title }: { grid: number[][]; title: string }) {
       </figcaption>
       <div
         className="relative overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Runs by weekday and hour, scrollable"
         onPointerLeave={() => setTip(null)}
       >
         <table className="w-full min-w-[520px] table-fixed border-separate border-spacing-[2px] text-[11px]">

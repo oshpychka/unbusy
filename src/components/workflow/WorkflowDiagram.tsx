@@ -208,7 +208,6 @@ export function WorkflowDiagram({
             data-step={id}
             onClick={() => onSelect(id)}
             aria-pressed={selected === id}
-            aria-label={`${meta.kicker}: ${meta.title}`}
             className="absolute rounded-md"
             style={style}
           >
@@ -247,10 +246,12 @@ export function WorkflowDiagram({
               onClick={() => onInsert(slot)}
               aria-label="Add a step here"
               title="Add a step here"
-              className="absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line-strong bg-surface text-muted transition-colors hover:border-primary hover:bg-primary hover:text-on-primary"
+              className="group absolute grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-muted [scale:calc(1/var(--canvas-scale,1))]"
               style={{ left: point.x, top: point.y }}
             >
-              <Icon name="plus" size={14} />
+              <span className="grid size-6 place-items-center rounded-full border border-line-strong bg-surface transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+                <Icon name="plus" size={14} />
+              </span>
             </button>
           );
         })}

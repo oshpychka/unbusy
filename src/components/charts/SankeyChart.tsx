@@ -68,6 +68,9 @@ export function SankeyChart({
       <div
         ref={ref}
         className="relative overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Flow chart, scrollable"
         onPointerLeave={() => setTip(null)}
       >
         <svg

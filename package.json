@@ -16,7 +16,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write src .github \"*.{ts,mjs,json}\"",
+    "format": "prettier --write src tests .github \"*.{ts,mjs,json}\"",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

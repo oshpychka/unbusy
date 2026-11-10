@@ -146,9 +146,12 @@ export function CanvasViewport({
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
-        style={{
-          transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-        }}
+        style={
+          {
+            transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
+            "--canvas-scale": view.scale,
+          } as React.CSSProperties
+        }
       >
         {children}
       </div>

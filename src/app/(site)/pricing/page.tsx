@@ -5,7 +5,7 @@ import { comparison, faqs, plans } from "@/data/pricing";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Pricing",
+  title: "Pricing: plans for solo owners, teams and agencies",
   description:
     "Plans from $19 a month for solo owners, small teams and agencies. Every plan includes the run debugger, retries and fallback paths.",
   path: "/pricing",
@@ -27,7 +27,12 @@ export default function PricingPage() {
         <h2 id="compare-title" className="reveal-on-scroll text-2xl font-bold">
           Compare plans
         </h2>
-        <div className="mt-4 overflow-x-auto">
+        <div
+          className="mt-4 overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Plan comparison, scrollable"
+        >
           <table className="w-full min-w-[540px] text-sm">
             <thead>
               <tr className="border-b border-line text-left">

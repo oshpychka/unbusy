@@ -1,7 +1,5 @@
-import { Suspense } from "react";
 import { Container } from "@/components/site/Container";
 import { SavingsCalculator } from "@/components/site/SavingsCalculator";
-import { Skeleton } from "@/components/ui/States";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -22,9 +20,7 @@ export default function SavingsCalculatorPage() {
         numbers update as you type, and the link keeps your estimate.
       </p>
       <div className="mt-10">
-        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <SavingsCalculator />
-        </Suspense>
+        <SavingsCalculator />
       </div>
     </Container>
   );

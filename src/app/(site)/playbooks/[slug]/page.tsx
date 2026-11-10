@@ -34,6 +34,8 @@ export async function generateMetadata({
   if (!playbook) return {};
   return pageMetadata({
     title: `${playbook.title}: automation playbook`,
+    absoluteTitle: true,
+    ownImage: true,
     description: playbook.summary,
     path: `/playbooks/${slug}`,
   });

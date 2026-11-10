@@ -83,7 +83,12 @@ export function BatchResults({
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-line">
+      <div
+        className="overflow-x-auto rounded-md border border-line"
+        tabIndex={0}
+        role="region"
+        aria-label="Results for each record, scrollable"
+      >
         <table className="w-full min-w-[640px] text-sm">
           <caption className="sr-only">Result for each record</caption>
           <thead className="bg-sunken text-left text-xs text-muted">

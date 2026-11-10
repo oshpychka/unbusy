@@ -1,8 +1,5 @@
-import { Suspense } from "react";
 import { Container } from "@/components/site/Container";
 import { PlaybookFilter } from "@/components/site/PlaybookFilter";
-import { PlaybookRow } from "@/components/site/PlaybookRow";
-import { playbooks } from "@/data/playbooks";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -23,17 +20,7 @@ export default function PlaybooksPage() {
         then copy it into the demo and change whatever does not fit.
       </p>
       <div className="mt-10">
-        <Suspense
-          fallback={
-            <ul className="mt-6 divide-y divide-line border-y border-line">
-              {playbooks.map((playbook) => (
-                <PlaybookRow key={playbook.slug} playbook={playbook} />
-              ))}
-            </ul>
-          }
-        >
-          <PlaybookFilter />
-        </Suspense>
+        <PlaybookFilter />
       </div>
     </Container>
   );

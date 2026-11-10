@@ -2,7 +2,8 @@ import { LegalPage } from "@/components/site/LegalPage";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Privacy policy",
+  title: "Privacy policy for the Unbusy demo",
+  absoluteTitle: true,
   description:
     "What the Unbusy demo stores, where it stores it and what we measure. Short version: your data stays in your browser.",
   path: "/privacy",

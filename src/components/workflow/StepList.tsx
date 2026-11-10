@@ -38,7 +38,6 @@ export function StepList(props: StepListProps) {
         type="button"
         onClick={() => onSelect("trigger")}
         aria-pressed={selected === "trigger"}
-        aria-label={`Trigger: ${meta.title}`}
         className="h-[68px] rounded-md"
       >
         <StepCard
@@ -93,7 +92,6 @@ function Row(props: BranchProps & { step: Step }) {
         type="button"
         onClick={() => onSelect(step.id)}
         aria-pressed={selected === step.id}
-        aria-label={`${meta.kicker}: ${meta.title}`}
         className="h-[68px] rounded-md"
       >
         <StepCard

@@ -2,7 +2,8 @@ import { LegalPage } from "@/components/site/LegalPage";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Terms of use",
+  title: "Terms of use for the Unbusy demo",
+  absoluteTitle: true,
   description:
     "Terms for using the Unbusy demo: a sample product with simulated apps and no real accounts or payments.",
   path: "/terms",
