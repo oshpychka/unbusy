@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/app/PageHeader";
+import { Suspense } from "react";
+import { AppPlaybooks } from "@/components/app/AppPlaybooks";
 
 export const metadata: Metadata = { title: "Playbooks" };
 
 export default function PlaybooksPage() {
   return (
-    <PageHeader
-      title="Playbooks"
-      description="Ready-made workflows you can copy and adjust."
-    />
+    <Suspense>
+      <AppPlaybooks />
+    </Suspense>
   );
 }

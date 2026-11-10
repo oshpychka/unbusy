@@ -18,6 +18,8 @@
   --success: #1e7a46;
   --danger: #c2362b;
   --warning: #9a6200;
+  --chart: #2140c8;
+  --chart-fail: #c2362b;
   --overlay: rgb(21 23 26 / 0.4);
   --shadow-overlay: 0 12px 32px -8px rgb(21 23 26 / 0.18);
   color-scheme: light;
@@ -39,6 +41,8 @@
   --success: #5bc98a;
   --danger: #ff7a6e;
   --warning: #f0b44c;
+  --chart: #6b82f5;
+  --chart-fail: #e5584c;
   --overlay: rgb(0 0 0 / 0.6);
   --shadow-overlay: 0 12px 32px -8px rgb(0 0 0 / 0.6);
   color-scheme: dark;
@@ -61,6 +65,8 @@
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-overlay: var(--overlay);
+  --color-chart: var(--chart);
+  --color-chart-fail: var(--chart-fail);
 
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;

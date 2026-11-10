@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/app/PageHeader";
+import { Suspense } from "react";
+import { RunsList } from "@/components/app/RunsList";
 
 export const metadata: Metadata = { title: "Runs" };
 
 export default function RunsPage() {
   return (
-    <PageHeader title="Runs" description="Every run from the last 30 days." />
+    <Suspense>
+      <RunsList />
+    </Suspense>
   );
 }

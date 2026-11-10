@@ -1,10 +1,5 @@
-import { PageHeader } from "@/components/app/PageHeader";
+import { Overview } from "@/components/app/Overview";
 
 export default function OverviewPage() {
-  return (
-    <PageHeader
-      title="Overview"
-      description="What your automations did in the last 30 days."
-    />
-  );
+  return <Overview />;
 }

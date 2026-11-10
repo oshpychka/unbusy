@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/app/PageHeader";
+import { Suspense } from "react";
+import { Analytics } from "@/components/app/Analytics";
 
 export const metadata: Metadata = { title: "Analytics" };
 
 export default function AnalyticsPage() {
   return (
-    <PageHeader
-      title="Analytics"
-      description="Hours and dollars your workflows saved."
-    />
+    <Suspense>
+      <Analytics />
+    </Suspense>
   );
 }

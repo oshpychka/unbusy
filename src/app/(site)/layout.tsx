@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { Toaster } from "@/components/ui/Toaster";
 
 export default function SiteLayout({
   children,
@@ -13,6 +14,7 @@ export default function SiteLayout({
         {children}
       </main>
       <SiteFooter />
+      <Toaster />
     </>
   );
 }
